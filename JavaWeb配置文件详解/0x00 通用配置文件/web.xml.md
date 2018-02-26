@@ -169,11 +169,11 @@ listener用来监听客户端的请求和服务端的操作
 <servlet>
     <servlet-name>SpringMVC</servlet-name>
     <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
-    <load-on-startup>1</load-on-startup>
     <init-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>classpath:spring/springmvc.xml</param-value>
     </init-param>
+    <load-on-startup>1</load-on-startup>
 </servlet>
 <servlet-mapping>
     <servlet-name>SpringMVC</servlet-name>
@@ -191,6 +191,8 @@ load-on-startup标签**标记容器是否在启动的时候就加载**这个serv
 * 当值小于0或者没有指定时，则表示容器在该servlet被请求时，才会去加载
 
 正数的值越小，该servlet的优先级就越高，应用启动时就优先加载，当值相同的时候，容器就会自己选择优先加载。
+
+`<load-on-startup>`标签要放在`<init-param>`之后，这是DTD规定的，否则在IDEA的文本编辑器里就会报错（编译时不会报错）
 
 #### 0x08 error-page
 
