@@ -211,3 +211,66 @@ public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
 > 更多标签和属性信息可参考官方文档
 >
 > [<concurrency-control> Attributes](https://docs.spring.io/spring-security/site/docs/5.0.x/reference/htmlsingle/#nsa-concurrency-control-attributes)
+
+##### 0x04 custom-filter
+
+这个用来自定义filter，它默认有一套filter chain
+
+> 详细的Spring Security Filter Chain信息可参考：
+>
+> [14.3. Filter Ordering](https://docs.spring.io/spring-security/site/docs/5.0.x/reference/html5/#filter-ordering)
+
+在上述的参考文献中即为一个请求可能走过的filter列表，从上往下依次走过
+
+对于`custom-filter`标签，他提供了：
+
+* `ref=` 用来指向filter的bean
+* `before=` 在给定的filter之前插入
+* `position=` 替换掉给定的filter
+* `after=` 在给定的filter之后插入
+
+你自己写的filter必需要实现接口`javax.servlet.Filter`
+
+后面的`before`，`position`，`after`的值是一个filter class的代号（alias）
+
+> 相关代号可以参考表格：
+>
+> [6.3.6. Adding in Your Own Filters](https://docs.spring.io/spring-security/site/docs/5.0.x/reference/html5/#ns-custom-filters)
+>
+> 表格在此节的Table 2. Standard Filter Aliases and Ordering
+
+在这里不将整个的表格都拿过来了，说一下这个表格怎么看以及注意事项
+
+| Alias         | Filter Class   | Namespace Element or Attribute |
+| ------------- | -------------- | ------------------------------ |
+| LOGOUT_FILTER | `LogoutFilter` | ` http/logout `                |
+
+上面这个表格是在上述参考文献的表格里摘出来的一小部分
+
+从左边看起
+
+* 第一列是这个filter的代号，也就是你应当放到`before`，`position`或`after`里面的值。
+* 第二列是这个代号所代指的具体的类，也就是Spring Security框架所实现这个filter的具体的类名
+* 第三列是这个filter与哪个XML文件配置标签作用相同
+
+> 以下摘自Spring Security文档6.3.6小节
+>
+> Avoiding filter position conflicts
+>
+> If you are inserting a custom filter which may occupy the same position as one of the standard filters created by the namespace then it’s important that you don’t include the namespace versions by mistake. Remove any elements which create filters whose functionality you want to replace. 
+>
+> 大意就是，如果使用了XML标签就不能添加相关的`custom-filter`，如果添加了相关的`custom-filter`那就不能使用第三列所指的XML标签，否则他就会抛出异常
+>
+> 举个例子：
+>
+> ```xml
+> <custom-filter ref="myLogoutFilter" position="LOGOUT_FILTER"/>
+> <logout logout-url="/v1/user/session">
+> ```
+>
+> 如果上面的配置出现在同一个配置文件里，Spring Security就会抛出异常
+
+#### 0x01 配置自定义Security filter
+
+
+
