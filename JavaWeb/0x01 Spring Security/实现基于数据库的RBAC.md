@@ -270,7 +270,22 @@ public class MyAuthenticationEntryPoint implements AuthenticationEntryPoint {
 >
 > 如果上面的配置出现在同一个配置文件里，Spring Security就会抛出异常
 
+在此仅叙述`custom-filter`标签如何使用，对于要添加的filter在下面单独叙述
+
 #### 0x01 配置自定义Security filter
 
+配置自己的`SecurityFilter`是为了向其添加自己的`securityMetadataSource`, `securityMetadataSource`的作用就是从数据库中读取相关的权限角色用户数据
 
+> `SecurityFilter`的代码可参考我的GitHub：
+>
+> [SecurityFilter.java](https://github.com/LiuinStein/CILManagement-Server/blob/dev/src/main/java/cn/opencil/security/SecurityFilter.java)
 
+在上述的代码中我们为其创建了一个属性：
+
+```java
+private FilterInvocationSecurityMetadataSource securityMetadataSource;
+```
+
+并为其设置了set方法，设置set方法的原因就是我们可以通过Spring的依赖注入将这个`securityMetadataSource`通过XML配置文件指定bean的形式注入进去
+
+并实现了父类的`obtainSecurityMetadataSource `方法，这个方法用来获取`securityMetadataSource`以便Spring Security使用
