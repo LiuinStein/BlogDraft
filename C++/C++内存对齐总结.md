@@ -146,7 +146,7 @@ struct Origin
 
 使用`sizeof`输出其大小为8，因为其最宽基本数据成员为int，32位机上int占据4字节，char占据1字节，所以其最终大小要为内部最大成员的整数倍，4+1=5，补齐为4的2倍即为8字节。
 
-#### 0x02 内存对齐实例
+#### 0x02 结构体内存对齐实例
 
 **以下默认均为32位机上进行测试，并输出结果：**
 
@@ -172,7 +172,198 @@ struct Optimized
 
 再考虑一种复杂情况：
 
+```c++
+struct Common
+{
+    int a;
+    double b;
+};
 
+struct Origin
+{
+    char a;
+    Common b;
+};  // 占据24字节
+```
+
+这时struct Origin的大小变为了24，原因为当struct中有自定义类型时，选取其中最大的基本类型来进行对齐，计算Origin大小时，首先其中带有自定义类型struct Common，在Common中选取最大的基本数据类型为double，一个double占据8个字节的内存，所以其最终的大小要补齐为8的倍数，首先看其中的结构体Common，Common占据16字节（8+4=12补齐为8的倍数为16），然后Common的16字节+外面char的1字节=17字节，补齐为8的倍数，整个大的结构体占据24字节。
+
+这样，如果不将int a和double b单独放在一个结构体内的话，反而能节省空间，因为省略了内部结构体补齐空间的过程，例如：
+
+```c++
+struct Optimized
+{
+    char a;
+    int b;
+    double c;
+};  // 占据16字节
+```
+
+所以，如果没有极其的必要，最好还是不要在结构体里嵌套结构体。
+
+再补充一点，C++的空类、空结构体、空union也是有大小的，其占据的大小为1字节，这和里面有一个char类型的成员是占据一样多的内存，如下面示例中，两个结构体占据的大小均为1字节。
+
+```c++
+struct Origin
+{
+};
+
+struct Origin
+{
+    char a;
+};
+```
+
+#### 0x03 类的内存对齐
+
+**以下默认均为32位机上进行测试，并输出结果：**
+
+类的内存分布规则还是会按照结构体的来，即便里面有成员函数（非虚函数），其大小依然只算其内部数据成员所占大小，如：
+
+```c++
+class Origin
+{
+    char a;
+public:
+    char getA()
+    {
+        return a;
+    }
+
+    void setA(char a)
+    {
+        this->a = a;
+    }
+};  // 类的大小为1字节，仅算其中数据成员的大小
+```
+
+如果其中有虚函数，那就另当别论了，如例：
+
+```c++
+class Base
+{
+    char a;
+    double b;
+public:
+    virtual void printA()
+    {
+        std::cout << "From Base class: " << a << std::endl;
+    }
+}; // 占据24字节
+```
+
+首先，**虚函数指针单独搁伙，不与数据成员一块对齐**，一个虚函数指针跟普通指针一样占据4字节，如上，Base类中，内存分布应如下：
+
+\|\<- vptr4 -\>|\<- 空4 -\>|\<- char1 -\>|\<- 空7 -\>|\<- double8 -\>\|
+
+\|\<-           4 + 4 + 1 + 7 + 8 = 24字节                -\>\|
+
+而不是：
+
+\|\<- vptr4 -\>|\<- char1 -\>|\<- 空3 -\>|\<- double8 -\>\|
+
+\|\<-           4 + 1 + 3 + 8 = 16字节           -\>\|
+
+**一定要注意虚函数指针是单独搁伙的！**
+
+同样此时我们再添加一个虚函数，其占据大小也为24字节，因为另一个虚函数指针填充了一开始空出来的那4个字节：
+
+```c++
+class Base
+{
+    char a;
+    double b;
+public:
+    virtual void printA()
+    {
+        std::cout << "From Base class: " << a << std::endl;
+    }
+
+    virtual void printB()
+    {
+        std::cout << "From Base class: " << b << std::endl;
+    }
+}; // 占据24字节
+```
+
+带有虚函数的一个类的派生类的大小为基类的大小再加上按基类和派生类中所有基本数据成员最大宽度对齐后的大小，如下：
+
+```c++
+class Base
+{
+    char a;
+    double b;
+public:
+    virtual void printA()
+    {
+        std::cout << "From Base class: " << a << std::endl;
+    }
+
+    virtual void printB()
+    {
+        std::cout << "From Base class: " << b << std::endl;
+    }
+};  // 基类大小为24字节
+
+class Derived : public Base
+{
+    char b;
+public:
+    void printA() override
+    {
+        std::cout << "From Derived class: " << b << std::endl;
+    }
+
+    void printB() override
+    {
+        std::cout << "From Derived class: " << b << std::endl;
+    }
+};  // 派生类大小为32字节
+```
+
+首先我们纵观基类和派生类中，最大的基本数据成员为double类型，其大小为8字节，所以派生类也要按照8字节去对齐，基类大小为24字节，派生类仅多出一个char类型数据，大小为1字节，24+1=25字节，25按照8的倍数对齐的话，需要补齐7个字节，所以派生类大小的结果为32字节。
+
+同样适用于多继承情况下，例如：
+
+```c++
+class Base
+{
+    char a;
+    double b;
+public:
+    virtual void printA()
+    {
+        std::cout << "From Base class: " << a << std::endl;
+    }
+};  // 占据24字节
+
+class Base1
+{
+    char a;
+public:
+    virtual void printB()
+    {
+        std::cout << "From Base class: " << a << std::endl;
+    }
+};  // 占据8字节
+
+class Derived : public Base, Base1
+{
+    char b;
+public:
+    void printA() override
+    {
+        std::cout << "From Derived class: " << b << std::endl;
+    }
+
+    void printB() override
+    {
+        std::cout << "From Derived class: " << b << std::endl;
+    }
+};  // 占据40字节
+```
+
+此例中Derived类的大小为两个基类大小的总和为24+8=32字节，再加上派生类中所处的这个char类型的1字节，为33字节，再加7补齐为8的倍数即为40字节。
 
 ### 0x0 参考文献
 
