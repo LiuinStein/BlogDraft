@@ -381,14 +381,27 @@ struct mystruct {
 
 假设说，不用内存对齐，那么它在内存里将会是这样的：
 
-![Ebcwt](F:\Desktop\Ebcwt.png)
+![](https://bucket.shaoqunliu.cn/image/0163.png)
 
-CPU首先从0x0000开始，读取4字节，此时把内存块0x0000-0x0003都放在了寄存器里，这时CPU需要左移一个字节，将0x0000那个内存块剔除掉，然后CPU从0x0004那个内存块开始，再次读入4个字节，此时读入了0x0004-0x0007四个内存块，然后通过右移3个字节，剔除掉右边3个，然后将剩下的这1个字节与寄存器里面的3个字节做OR运算即可得出0x0001-0x0004这4个字节所组成的int类型的数据。
+CPU首先从0x0000开始，读取4字节，此时把内存块0x0000-0x0003都放在了寄存器里，这时CPU需要左移一个字节，将0x0000那个内存块剔除掉，然后CPU从0x0004那个内存块开始，再次读入4个字节，此时读入了0x0004-0x0007四个内存块，然后通过右移3个字节，剔除掉右边3个，然后将剩下的这1个字节与寄存器里面的3个字节做OR运算即可得出0x0001-0x0004这4个字节所组成的int类型的数据。这中间CPU读取了2次还做了一次OR运算。
 
+如果内存对齐了，情况就不一样了，如图：
 
+![](https://bucket.shaoqunliu.cn/image/0164.png)
+
+CPU仅需要通过一次读取就可以读取到其中的数据，相比于不对齐的情况，省去了一次读取的过程和一次OR运算的过程，通过内存对齐机制有效提升了CPU访问内存的效率。
 
 ### 0x0 参考文献
 
+[Data structure alignment - Wikipedia](https://en.wikipedia.org/wiki/Data_structure_alignment)
+
+[Purpose of memory alignment下joshperry的回答 - Stackoverflow](https://stackoverflow.com/a/381368)
+
 [Memory Layout of C Programs - GeeksforGeeks](https://www.geeksforgeeks.org/memory-layout-of-c-program/)
 
-[/STACK (Stack Allocations) - MSDN文档](https://docs.microsoft.com/zh-cn/cpp/build/reference/stack-stack-allocations)
+[/STACK (Stack Allocations) - MSDN](https://docs.microsoft.com/zh-cn/cpp/build/reference/stack-stack-allocations)
+
+[C/C++ 内存对齐原则及作用 - CSDN](https://blog.csdn.net/chy19911123/article/details/48894579)
+
+[C++ 类型大小和内存分布（虚函数指针、虚表、内存对齐问题）- CSDN](https://blog.csdn.net/toonle/article/details/77511910)
+
