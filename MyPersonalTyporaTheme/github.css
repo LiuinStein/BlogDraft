@@ -41,11 +41,17 @@
 }
 
 @font-face {
-  font-family: 'Microsoft YaHei Light';
+  font-family: 'Microsoft YaHei Bold';
   font-style: normal;
   font-weight: bold;
   src: local('Microsoft YaHei'),url('./github/msyhbd.ttc') format('ttc')
 }
+
+strong, b {
+  font-weight: bold;
+  font-family: 'Microsoft YaHei';
+}
+
 
 html {
   font-size: 16px;
@@ -90,6 +96,7 @@ h6 {
   font-weight: bold;
   line-height: 1.4;
   cursor: text;
+  font-family: 'Microsoft YaHei';
 }
 h1:hover a.anchor,
 h2:hover a.anchor,
